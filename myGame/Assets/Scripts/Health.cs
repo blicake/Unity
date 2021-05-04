@@ -1,4 +1,4 @@
 ﻿public interface IHealth
 {
-    void HealthControl(bool death);
+    void HealthControl(int healthChange);
 }

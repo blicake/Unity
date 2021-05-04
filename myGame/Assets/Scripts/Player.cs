@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class Player : MonoBehaviour, IHealth
+public class Player : MonoBehaviour, IHealth, ISausage
 {
     [SerializeField] private float _speed;
     [SerializeField] private float _sensitivity;
@@ -13,12 +13,18 @@ public class Player : MonoBehaviour, IHealth
     private float _angle1;
 
     
-    [SerializeField] private static int _health = 3;
+    [SerializeField] private int _health = 3;
     [SerializeField] private Canvas health;
     [SerializeField] private Image ImagePrefab;
 
+    [SerializeField] private GameObject Sausage;
+    [SerializeField] private Transform SausagePrefab;
+
     private Image[] hearts;
-    Vector3 vector = new Vector3(50f, 0f, 0f);
+    Vector3 vector = new Vector3(100f, 0f, 0f);
+
+    bool _sausage = false;
+    Image SausageImage;
 
     private void Start()
     {
@@ -42,6 +48,16 @@ public class Player : MonoBehaviour, IHealth
         _angle1 = Input.GetAxis("Mouse X");
 
         if (_health == 0) Death();
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (_sausage)
+            {
+                Instantiate(Sausage, SausagePrefab.position + transform.position, Quaternion.identity);
+                _sausage = false;
+                Destroy(SausageImage);
+            }
+        }
     }
 
     private void FixedUpdate()
@@ -52,19 +68,27 @@ public class Player : MonoBehaviour, IHealth
         transform.Rotate(new Vector3(0f, _angle1 * _sensitivity * Time.fixedDeltaTime, 0f));
     }
 
-    public void HealthControl(bool death)
+    public void HealthControl(int healthChange)
     {
-        if (death)
+        switch (healthChange)
         {
-
-            _health = 0;
+            case 0:
+                Death();
+                break;
+            case 1:
+                Destroy(hearts[_health - 1]);
+                _health --;
+                break;
+            case 2:
+                if(_health < 3)
+                {
+                    Vector3 _vector = vector;
+                    _vector.x *= _health;
+                    hearts[_health] = Instantiate<Image>(ImagePrefab, ImagePrefab.transform.position + _vector, Quaternion.identity, health.transform);
+                }
+                break;
         }
-
-        else
-        {
-            Destroy(hearts[_health - 1]);
-            _health--;
-        }
+        
     }
 
     private void Death()
@@ -72,8 +96,17 @@ public class Player : MonoBehaviour, IHealth
        for(int i = 0; i < hearts.Length; i++)
         {
             Destroy(hearts[i]);
+            _health = 0;
         }
-        //SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);  не работает
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
+    void ISausage.Sausage(bool sausage, Image _object)
+    {
+        if (sausage) 
+        {
+            _sausage = true;
+            SausageImage = _object;
+        }
+    }
 }

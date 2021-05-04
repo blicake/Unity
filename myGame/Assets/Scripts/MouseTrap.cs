@@ -8,7 +8,8 @@ public class MouseTrap : MonoBehaviour
     {
         if (other.tag == "Player")
         {
-            other.GetComponent<IHealth>().HealthControl(false);
+            Destroy(gameObject.transform.parent.gameObject);
+            other.GetComponent<IHealth>().HealthControl(1);
         }
     }
 }
