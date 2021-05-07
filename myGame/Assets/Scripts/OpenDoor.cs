@@ -5,14 +5,20 @@ using UnityEngine.SceneManagement;
 
 public class OpenDoor : MonoBehaviour
 {
+    [SerializeField] private Animator _animator;
+
+    private void Awake()
+    {
+        _animator = GetComponent<Animator>();
+    }
     private void OnTriggerEnter(Collider other)
     {
         if (other.tag == "Player")
         {
-            if (!GameObject.FindGameObjectWithTag("GameController"))
+            if (GameObject.FindGameObjectWithTag("Key"))
             {
-                Destroy(GameObject.FindGameObjectWithTag("GameController"));
-                Destroy(gameObject, 1f);
+                _animator.SetTrigger("Open");
+                Destroy(GameObject.FindGameObjectWithTag("Key"));
             }
         }
     }

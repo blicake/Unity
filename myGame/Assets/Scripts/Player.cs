@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -7,7 +8,7 @@ using UnityEngine.UI;
 public class Player : MonoBehaviour, IHealth, ISausage
 {
     [SerializeField] private float _speed;
-    [SerializeField] private float _sensitivity;
+    public float _sensitivity;
 
     private Vector3 _direction = Vector3.zero;
     private float _angle1;
@@ -20,14 +21,24 @@ public class Player : MonoBehaviour, IHealth, ISausage
     [SerializeField] private GameObject Sausage;
     [SerializeField] private Transform SausagePrefab;
 
+    [SerializeField] private GameObject PauseMenu;
+    [SerializeField] private GameObject OptionsMenu;
+
     private Image[] hearts;
     Vector3 vector = new Vector3(100f, 0f, 0f);
 
     bool _sausage = false;
     Image SausageImage;
 
+    private void Awake()
+    {
+        PauseMenu.SetActive(true);
+        PauseMenu.SetActive(false);
+    }
+
     private void Start()
     {
+        SetSensitivity(PauseMenu.GetComponent<Menu>().Sensitivity);
         hearts = new Image[_health]; 
 
         for (int i = 0; i < _health; i++)
@@ -42,20 +53,46 @@ public class Player : MonoBehaviour, IHealth, ISausage
 
     private void Update()
     {
-        _direction.x = -Input.GetAxis("Horizontal");
-        _direction.z = -Input.GetAxis("Vertical");
+        if (!PauseMenu.activeInHierarchy)
+        {
+            _direction.x = -Input.GetAxis("Horizontal");
+            _direction.z = -Input.GetAxis("Vertical");
 
-        _angle1 = Input.GetAxis("Mouse X");
+            _angle1 = Input.GetAxis("Mouse X");
 
-        if (_health == 0) Death();
+            if (_health == 0) Death();
+        }
 
-        if (Input.GetMouseButtonDown(0))
+        if(!PauseMenu.activeInHierarchy && !health.gameObject.activeInHierarchy)
+        {
+            health.gameObject.SetActive(true);
+        }
+        
+
+        if (Input.GetMouseButtonDown(0) && !PauseMenu.activeInHierarchy)
         {
             if (_sausage)
             {
                 Instantiate(Sausage, SausagePrefab.position + transform.position, Quaternion.identity);
                 _sausage = false;
                 Destroy(SausageImage);
+            }
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (!PauseMenu.activeInHierarchy)
+            {
+                PauseMenu.SetActive(true);
+                health.gameObject.SetActive(false);
+            }
+            else
+            {
+                if (!OptionsMenu.activeInHierarchy)
+                {
+                    PauseMenu.SetActive(false);
+                    health.gameObject.SetActive(true);
+                }
             }
         }
     }
@@ -98,7 +135,7 @@ public class Player : MonoBehaviour, IHealth, ISausage
             Destroy(hearts[i]);
             _health = 0;
         }
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneManager.LoadScene(1);
     }
 
     void ISausage.Sausage(bool sausage, Image _object)
@@ -108,5 +145,10 @@ public class Player : MonoBehaviour, IHealth, ISausage
             _sausage = true;
             SausageImage = _object;
         }
+    }
+
+    private void SetSensitivity(float value)
+    {
+        _sensitivity = value;
     }
 }
