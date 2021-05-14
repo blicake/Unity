@@ -9,6 +9,11 @@ public class Bullet : MonoBehaviour
     private Vector3 _targetPosition;
     [SerializeField] private float speed;
 
+    private void Awake()
+    {
+        Destroy(gameObject, 5f);
+    }
+
     public Transform Target
     {
         set
@@ -29,6 +34,9 @@ public class Bullet : MonoBehaviour
             other.GetComponent<IHealth>().HealthControl(1);
             Destroy(gameObject);
         }
-        else Destroy(gameObject);
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        Destroy(gameObject);
     }
 }

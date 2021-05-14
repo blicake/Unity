@@ -29,5 +29,7 @@ public class CatsStart : MonoBehaviour
 
         _cat1.GetComponent<NavMeshAgent>().speed = speed1;
         _cat2.GetComponent<NavMeshAgent>().speed = speed2;
+
+        _cat1.GetComponent<AudioSource>().pitch = 1.1f;
     }
 }

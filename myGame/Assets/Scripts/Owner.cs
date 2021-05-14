@@ -6,9 +6,12 @@ using UnityEngine.AI;
 
 public class Owner : MonoBehaviour
 {
+    [SerializeField] private Animator _animator;
     [SerializeField] private Transform _viewPoint;
     [SerializeField] private Transform _bulletSpawn;
     [SerializeField] private GameObject _bulletPrefab;
+    [SerializeField] private AudioSource _walkSound;
+    [SerializeField] private AudioClip _shotSound;
 
     [SerializeField] private float _speed;
     Transform _target;
@@ -20,12 +23,15 @@ public class Owner : MonoBehaviour
 
     private void Awake()
     {
+        _animator = GetComponent<Animator>();
         _target = GameObject.FindGameObjectWithTag("Player").transform;
+        _walkSound = GetComponentInChildren<AudioSource>();
     }
 
     void Start()
     {
         navMeshAgent.SetDestination(waypoints[0].position);
+        _walkSound.Play();
         StartCoroutine(Fire());
     }
 
@@ -58,18 +64,21 @@ public class Owner : MonoBehaviour
             bool isHit = Physics.Raycast(_viewPoint.position, _viewPoint.forward, out hit, Mathf.Infinity);
             if (isHit && hit.collider.tag == "Player")
             {
+                _animator.SetBool("Spotted", true);
                 _stop = true;
+                _walkSound.Stop();
                 transform.rotation = Quaternion.LookRotation(_target.position - _viewPoint.position);
+                _walkSound.PlayOneShot(_shotSound, 0.5f);
                 var bullet = GameObject.Instantiate(_bulletPrefab, _bulletSpawn.transform.position, Quaternion.identity).GetComponent<Bullet>();
                 bullet.Target = _target;
-                Debug.DrawRay(_viewPoint.position, _viewPoint.forward, Color.green);
                 yield return new WaitForSeconds(3f);
             }
             else
             {
-                Debug.DrawRay(_viewPoint.position, -_viewPoint.forward, Color.red);
                 yield return new WaitForSeconds(3f);
                 _stop = false;
+                _walkSound.Play();
+                _animator.SetBool("Spotted", false);
             }
         }
     }

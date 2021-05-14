@@ -7,6 +7,7 @@ using UnityEngine.UI;
 
 public class Player : MonoBehaviour, IHealth, ISausage
 {
+    [SerializeField] private AudioSource _walkSound;
     [SerializeField] private float _speed;
     public float _sensitivity;
 
@@ -21,40 +22,52 @@ public class Player : MonoBehaviour, IHealth, ISausage
     [SerializeField] private GameObject Sausage;
     [SerializeField] private Transform SausagePrefab;
 
-    [SerializeField] private GameObject PauseMenu;
-    [SerializeField] private GameObject OptionsMenu;
-
     private Image[] hearts;
-    Vector3 vector = new Vector3(100f, 0f, 0f);
 
     bool _sausage = false;
     Image SausageImage;
 
     private void Awake()
     {
-        PauseMenu.SetActive(true);
-        PauseMenu.SetActive(false);
+        _sensitivity = 100 * Menu.instance.MouseSensitivity;
+        _walkSound = gameObject.GetComponentInChildren<AudioSource>();
+        _walkSound.Play();
+        _walkSound.Pause();
     }
 
     private void Start()
     {
-        SetSensitivity(PauseMenu.GetComponent<Menu>().Sensitivity);
         hearts = new Image[_health]; 
 
-        for (int i = 0; i < _health; i++)
-        {
-            Vector3 _vector = vector;
-            _vector.x *= i;
-
-            hearts[i] = Instantiate<Image>(ImagePrefab, ImagePrefab.transform.position + _vector, Quaternion.identity, health.transform);
-            
-        }
+        hearts = health.GetComponentsInChildren<Image>();
     }
 
     private void Update()
     {
-        if (!PauseMenu.activeInHierarchy)
+        bool playsound;
+        
+
+        if (Menu.instance.gameObject.activeInHierarchy && Menu.instance.OptionsMenu.activeInHierarchy)
         {
+            _sensitivity = 100 * Menu.instance.MouseSensitivity;
+        }
+        if (!Menu.instance.gameObject.activeInHierarchy)
+        {
+            if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.S))
+            {
+                playsound = true;
+            }
+            else playsound = false;
+
+            if (!playsound)
+            {
+                _walkSound.Pause();
+            }
+            else
+            {
+                _walkSound.UnPause();
+            }
+
             _direction.x = -Input.GetAxis("Horizontal");
             _direction.z = -Input.GetAxis("Vertical");
 
@@ -63,13 +76,13 @@ public class Player : MonoBehaviour, IHealth, ISausage
             if (_health == 0) Death();
         }
 
-        if(!PauseMenu.activeInHierarchy && !health.gameObject.activeInHierarchy)
+        if(!Menu.instance.gameObject.activeInHierarchy && !health.gameObject.activeInHierarchy)
         {
             health.gameObject.SetActive(true);
         }
         
 
-        if (Input.GetMouseButtonDown(0) && !PauseMenu.activeInHierarchy)
+        if (Input.GetMouseButtonDown(0) && !Menu.instance.gameObject.activeInHierarchy)
         {
             if (_sausage)
             {
@@ -81,17 +94,19 @@ public class Player : MonoBehaviour, IHealth, ISausage
 
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            if (!PauseMenu.activeInHierarchy)
+            if (!Menu.instance.gameObject.activeInHierarchy)
             {
-                PauseMenu.SetActive(true);
-                health.gameObject.SetActive(false);
+                Time.timeScale = 0;
+                AudioListener.pause = true;
+                Menu.instance.gameObject.SetActive(true);
             }
             else
             {
-                if (!OptionsMenu.activeInHierarchy)
+                if (!Menu.instance.OptionsMenu.activeInHierarchy)
                 {
-                    PauseMenu.SetActive(false);
-                    health.gameObject.SetActive(true);
+                    Menu.instance.gameObject.SetActive(false);
+                    Time.timeScale = 1;
+                    AudioListener.pause = false;
                 }
             }
         }
@@ -103,6 +118,7 @@ public class Player : MonoBehaviour, IHealth, ISausage
         transform.Translate(speed);
 
         transform.Rotate(new Vector3(0f, _angle1 * _sensitivity * Time.fixedDeltaTime, 0f));
+
     }
 
     public void HealthControl(int healthChange)
@@ -113,15 +129,14 @@ public class Player : MonoBehaviour, IHealth, ISausage
                 Death();
                 break;
             case 1:
-                Destroy(hearts[_health - 1]);
+                hearts[_health - 1].gameObject.SetActive(false);
                 _health --;
                 break;
             case 2:
                 if(_health < 3)
                 {
-                    Vector3 _vector = vector;
-                    _vector.x *= _health;
-                    hearts[_health] = Instantiate<Image>(ImagePrefab, ImagePrefab.transform.position + _vector, Quaternion.identity, health.transform);
+                    hearts[_health].gameObject.SetActive(true);
+                    _health++;
                 }
                 break;
         }
@@ -132,10 +147,10 @@ public class Player : MonoBehaviour, IHealth, ISausage
     {
        for(int i = 0; i < hearts.Length; i++)
         {
-            Destroy(hearts[i]);
+            hearts[i].gameObject.SetActive(false);
             _health = 0;
         }
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     void ISausage.Sausage(bool sausage, Image _object)
@@ -145,10 +160,5 @@ public class Player : MonoBehaviour, IHealth, ISausage
             _sausage = true;
             SausageImage = _object;
         }
-    }
-
-    private void SetSensitivity(float value)
-    {
-        _sensitivity = value;
     }
 }
